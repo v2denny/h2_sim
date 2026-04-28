@@ -1,0 +1,81 @@
+{
+  "simulation": {
+    "time_step_s": 1,
+    "max_history": 600,
+    "log_file": "simulation_log.csv"
+  },
+
+  "machines": {
+    "pv": false,
+    "electrolyzer": false,
+    "tank": false,
+    "fuel_cell": false,
+    "battery": false,
+    "grid": false,
+    "bottling": false
+  },
+
+  "environment": {
+    "solar_radiation_w_m2": 800,
+    "ambient_temperature_c": 25,
+    "grid_demand_w": 1500
+  },
+
+  "specs": {
+    "pv": {
+      "area_m2": 20,
+      "efficiency_ref": 0.2,
+      "temperature_coefficient_per_c": -0.004,
+      "reference_temperature_c": 25,
+      "nominal_voltage_v": 48,
+      "dc_system_efficiency": 0.96
+    },
+
+    "electrolyzer": {
+      "efficiency": 0.7,
+      "h2_production_mol_s": 0.015,
+      "min_power_w": 50,
+      "max_power_w": 4000,
+      "nominal_voltage_v": 48,
+      "water_per_h2_mol": 1,
+      "startup_delay_s": 0
+    },
+
+    "tank": {
+      "capacity_mol": 1000,
+      "max_pressure_bar": 700,
+      "initial_h2_mol": 0,
+      "high_stop_percent": 100,
+      "low_warning_percent": 0
+    },
+
+    "fuel_cell": {
+      "efficiency": 0.6,
+      "max_power_w": 3000,
+      "nominal_voltage_v": 48,
+      "min_tank_pressure_bar": 0,
+      "startup_delay_s": 0
+    },
+
+    "battery": {
+      "capacity_kwh": 10,
+      "initial_soc_percent": 0,
+      "max_charge_power_w": 3000,
+      "max_discharge_power_w": 3000,
+      "charge_efficiency": 0.95,
+      "discharge_efficiency": 0.95,
+      "nominal_voltage_v": 48,
+      "min_soc_percent": 0,
+      "max_soc_percent": 100
+    },
+
+    "bottling": {
+      "flow_mol_s": 0.05
+    },
+
+    "controller": {
+      "fuel_cell_can_charge_battery_when_no_grid_demand": true,
+      "auto_start_dependencies": true
+    }
+  }
+}
