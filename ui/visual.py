@@ -385,13 +385,13 @@ class Visual:
 
         # Bigger drawing panel
         panel_w = 560
-        panel_h = 405
+        panel_h = 375
 
         # Extra space only for the outer routing arrows
-        panel_extra_left = 55
-        panel_extra_right = 85
-        panel_extra_bottom = 65
-        panel_extra_top = 12
+        panel_extra_left = 60
+        panel_extra_right = 5
+        panel_extra_bottom = 0
+        panel_extra_top = 5
 
         x = max(640, self.width - (panel_w + panel_extra_left + panel_extra_right) - 25)
         y = 50
@@ -422,6 +422,8 @@ class Visual:
 
         node_w = 88
         node_h = 50
+        node_mid_x = node_w // 2
+        node_mid_y = node_h // 2
 
         # ------------------------------------------------------------
         # NODE POSITIONS
@@ -437,14 +439,21 @@ class Visual:
         fc = (x + 210, y + 265)
         bat = (x + 385, y + 265)
 
-        # Separate routing lanes so arrows do not overlap
-        pv_bat_left_x = x - 40
-        pv_bat_bottom_y = y + panel_h + 26
+        # ------------------------------------------------------------
+        # ROUTING LANES
+        # ------------------------------------------------------------
 
+        # PV -> BAT goes left, then through the middle, then enters BAT from the top center
+        pv_bat_left_x = x - 40
+        pv_bat_mid_y = fc[1] - 30
+        pv_bat_entry_x = bat[0] + node_mid_x
+
+        # FC -> GRID goes outside/bottom/right, but not too low
         fc_grid_right_x = x + panel_w - 22
-        fc_grid_bottom_y = y + panel_h + 4
+        fc_grid_bottom_y = fc[1] + node_h + 22
         fc_grid_entry_y = grid[1] + 30
 
+        # BAT -> GRID goes on its own right-side lane
         bat_grid_right_x = x + panel_w - 48
         bat_grid_entry_y = grid[1] + 40
 
@@ -454,69 +463,69 @@ class Visual:
 
         # PV -> GRID
         self.draw_arrow([
-            (pv[0] + node_w, pv[1] + 18),
-            (grid[0], grid[1] + 18)
+            (pv[0] + node_w, pv[1] + node_mid_y),
+            (grid[0], grid[1] + node_mid_y)
         ])
 
         # PV -> ELECTROLYZER
         self.draw_arrow([
-            (pv[0] + 44, pv[1] + node_h),
-            (pv[0] + 44, elet[1])
+            (pv[0] + node_mid_x, pv[1] + node_h),
+            (pv[0] + node_mid_x, elet[1])
         ])
 
         # ELECTROLYZER -> TANK
         self.draw_arrow([
-            (elet[0] + node_w, elet[1] + 25),
-            (tank[0], tank[1] + 25)
+            (elet[0] + node_w, elet[1] + node_mid_y),
+            (tank[0], tank[1] + node_mid_y)
         ])
 
         # TANK -> FUEL CELL
         self.draw_arrow([
-            (tank[0] + 44, tank[1] + node_h),
-            (fc[0] + 44, fc[1])
+            (tank[0] + node_mid_x, tank[1] + node_h),
+            (fc[0] + node_mid_x, fc[1])
         ])
 
         # TANK -> BOTTLING
         self.draw_arrow([
-            (tank[0] + node_w, tank[1] + 25),
-            (bot[0], bot[1] + 25)
+            (tank[0] + node_w, tank[1] + node_mid_y),
+            (bot[0], bot[1] + node_mid_y)
         ])
 
         # FUEL CELL -> BATTERY
         self.draw_arrow([
-            (fc[0] + node_w, fc[1] + 35),
-            (bat[0], bat[1] + 35)
+            (fc[0] + node_w, fc[1] + node_mid_y),
+            (bat[0], bat[1] + node_mid_y)
         ])
 
         # ------------------------------------------------------------
-        # EXTERNAL NON-OVERLAPPING ARROWS
+        # EXTERNAL / ROUTED ARROWS
         # ------------------------------------------------------------
 
         # PV -> BATTERY
-        # Left outside lane, lowest bottom lane, up into battery
+        # Goes left, down, through the middle, and enters BAT from top center
         self.draw_arrow([
-            (pv[0], pv[1] + 25),
-            (pv_bat_left_x, pv[1] + 25),
-            (pv_bat_left_x, pv_bat_bottom_y),
-            (bat[0] + 44, pv_bat_bottom_y),
-            (bat[0] + 44, bat[1] + node_h)
+            (pv[0], pv[1] + node_mid_y),
+            (pv_bat_left_x, pv[1] + node_mid_y),
+            (pv_bat_left_x, pv_bat_mid_y),
+            (pv_bat_entry_x, pv_bat_mid_y),
+            (pv_bat_entry_x, bat[1])
         ])
 
         # FUEL CELL -> GRID
-        # Bottom lane closest to panel, far-right vertical lane, clean horizontal entry into grid
+        # Bottom lane, right vertical lane, clean horizontal entry into GRID
         self.draw_arrow([
-            (fc[0] + 44, fc[1] + node_h),
-            (fc[0] + 44, fc_grid_bottom_y),
+            (fc[0] + node_mid_x, fc[1] + node_h),
+            (fc[0] + node_mid_x, fc_grid_bottom_y),
             (fc_grid_right_x, fc_grid_bottom_y),
             (fc_grid_right_x, fc_grid_entry_y),
             (grid[0] + node_w, fc_grid_entry_y)
         ])
 
         # BATTERY -> GRID
-        # Separate right-side lane, clean horizontal entry into grid
+        # Separate right-side lane, clean horizontal entry into GRID
         self.draw_arrow([
-            (bat[0] + node_w, bat[1] + 25),
-            (bat_grid_right_x, bat[1] + 25),
+            (bat[0] + node_w, bat[1] + node_mid_y),
+            (bat_grid_right_x, bat[1] + node_mid_y),
             (bat_grid_right_x, bat_grid_entry_y),
             (grid[0] + node_w, bat_grid_entry_y)
         ])
@@ -531,8 +540,8 @@ class Visual:
         self.draw_node("tank", *tank)
         self.draw_node("bottling", *bot)
         self.draw_node("fuel_cell", *fc)
-        self.draw_node("battery", *bat)
-        
+        self.draw_node("battery", *bat)        
+                
     def draw_graph(self, key, x, y, w, h, label, unit):
         data = self.twin.history.get(key, [])
 
