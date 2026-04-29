@@ -344,32 +344,65 @@ class Visual:
         status_text = self.small_font.render(status, True, (255, 255, 255))
         self.screen.blit(status_text, (x + 28, y + 32))
 
-    def draw_arrow(self, start, end):
-        pygame.draw.line(self.screen, (210, 210, 210), start, end, 3)
+    def draw_arrow(self, points):
+        """
+        Draws a multi-segment orthogonal arrow.
+
+        Usage:
+        self.draw_arrow([(x1, y1), (x2, y1), (x2, y2)])
+        """
+
+        if len(points) < 2:
+            return
+
+        color = (220, 220, 220)
+        width = 3
+
+        for i in range(len(points) - 1):
+            pygame.draw.line(self.screen, color, points[i], points[i + 1], width)
+
+        start = points[-2]
+        end = points[-1]
 
         sx, sy = start
         ex, ey = end
 
         if abs(ex - sx) >= abs(ey - sy):
             if ex >= sx:
-                points = [(ex, ey), (ex - 10, ey - 6), (ex - 10, ey + 6)]
+                arrow = [(ex, ey), (ex - 12, ey - 7), (ex - 12, ey + 7)]
             else:
-                points = [(ex, ey), (ex + 10, ey - 6), (ex + 10, ey + 6)]
+                arrow = [(ex, ey), (ex + 12, ey - 7), (ex + 12, ey + 7)]
         else:
             if ey >= sy:
-                points = [(ex, ey), (ex - 6, ey - 10), (ex + 6, ey - 10)]
+                arrow = [(ex, ey), (ex - 7, ey - 12), (ex + 7, ey - 12)]
             else:
-                points = [(ex, ey), (ex - 6, ey + 10), (ex + 6, ey + 10)]
+                arrow = [(ex, ey), (ex - 7, ey + 12), (ex + 7, ey + 12)]
 
-        pygame.draw.polygon(self.screen, (210, 210, 210), points)
+        pygame.draw.polygon(self.screen, color, arrow)
 
     def draw_system_diagram(self):
         self.machine_rects = {}
 
-        x = max(745, self.width - 430)
+        # Bigger drawing panel
+        panel_w = 560
+        panel_h = 405
+
+        # Extra space only for the outer routing arrows
+        panel_extra_left = 55
+        panel_extra_right = 85
+        panel_extra_bottom = 65
+        panel_extra_top = 12
+
+        x = max(640, self.width - (panel_w + panel_extra_left + panel_extra_right) - 25)
         y = 50
 
-        panel = pygame.Rect(x - 14, y - 12, 405, 330)
+        panel = pygame.Rect(
+            x - panel_extra_left,
+            y - panel_extra_top,
+            panel_w + panel_extra_left + panel_extra_right,
+            panel_h + panel_extra_top + panel_extra_bottom
+        )
+
         pygame.draw.rect(self.screen, (40, 40, 40), panel)
         pygame.draw.rect(self.screen, (150, 150, 150), panel, 2)
 
@@ -377,6 +410,7 @@ class Visual:
             self.big_font.render("System ON/OFF + Auto Status", True, (255, 255, 255)),
             (x, y - 2)
         )
+
         self.screen.blit(
             self.small_font.render(
                 "click machine to toggle | green = active, red = off/idle/safety-stop",
@@ -386,25 +420,110 @@ class Visual:
             (x, y + 22)
         )
 
-        pv = (x, y + 65)
-        grid = (x + 285, y + 65)
-        elet = (x, y + 155)
-        tank = (x + 140, y + 155)
-        bot = (x + 285, y + 155)
-        fc = (x + 140, y + 245)
-        bat = (x + 285, y + 245)
+        node_w = 88
+        node_h = 50
 
-        self.draw_arrow((pv[0] + 88, pv[1] + 14), (grid[0], grid[1] + 14))
-        self.draw_arrow((pv[0] + 44, pv[1] + 50), (elet[0] + 44, elet[1]))
-        self.draw_arrow((pv[0] + 88, pv[1] + 40), (bat[0], bat[1] + 12))
+        # ------------------------------------------------------------
+        # NODE POSITIONS
+        # ------------------------------------------------------------
 
-        self.draw_arrow((elet[0] + 88, elet[1] + 25), (tank[0], tank[1] + 25))
-        self.draw_arrow((tank[0] + 44, tank[1] + 50), (fc[0] + 44, fc[1]))
-        self.draw_arrow((tank[0] + 88, tank[1] + 25), (bot[0], bot[1] + 25))
+        pv = (x + 20, y + 70)
+        grid = (x + 385, y + 70)
 
-        self.draw_arrow((fc[0] + 88, fc[1] + 13), (grid[0], grid[1] + 40))
-        self.draw_arrow((fc[0] + 88, fc[1] + 34), (bat[0], bat[1] + 34))
-        self.draw_arrow((bat[0] + 44, bat[1]), (grid[0] + 44, grid[1] + 50))
+        elet = (x + 20, y + 165)
+        tank = (x + 210, y + 165)
+        bot = (x + 385, y + 165)
+
+        fc = (x + 210, y + 265)
+        bat = (x + 385, y + 265)
+
+        # Separate routing lanes so arrows do not overlap
+        pv_bat_left_x = x - 40
+        pv_bat_bottom_y = y + panel_h + 26
+
+        fc_grid_right_x = x + panel_w - 22
+        fc_grid_bottom_y = y + panel_h + 4
+        fc_grid_entry_y = grid[1] + 30
+
+        bat_grid_right_x = x + panel_w - 48
+        bat_grid_entry_y = grid[1] + 40
+
+        # ------------------------------------------------------------
+        # DIRECT INTERNAL ARROWS
+        # ------------------------------------------------------------
+
+        # PV -> GRID
+        self.draw_arrow([
+            (pv[0] + node_w, pv[1] + 18),
+            (grid[0], grid[1] + 18)
+        ])
+
+        # PV -> ELECTROLYZER
+        self.draw_arrow([
+            (pv[0] + 44, pv[1] + node_h),
+            (pv[0] + 44, elet[1])
+        ])
+
+        # ELECTROLYZER -> TANK
+        self.draw_arrow([
+            (elet[0] + node_w, elet[1] + 25),
+            (tank[0], tank[1] + 25)
+        ])
+
+        # TANK -> FUEL CELL
+        self.draw_arrow([
+            (tank[0] + 44, tank[1] + node_h),
+            (fc[0] + 44, fc[1])
+        ])
+
+        # TANK -> BOTTLING
+        self.draw_arrow([
+            (tank[0] + node_w, tank[1] + 25),
+            (bot[0], bot[1] + 25)
+        ])
+
+        # FUEL CELL -> BATTERY
+        self.draw_arrow([
+            (fc[0] + node_w, fc[1] + 35),
+            (bat[0], bat[1] + 35)
+        ])
+
+        # ------------------------------------------------------------
+        # EXTERNAL NON-OVERLAPPING ARROWS
+        # ------------------------------------------------------------
+
+        # PV -> BATTERY
+        # Left outside lane, lowest bottom lane, up into battery
+        self.draw_arrow([
+            (pv[0], pv[1] + 25),
+            (pv_bat_left_x, pv[1] + 25),
+            (pv_bat_left_x, pv_bat_bottom_y),
+            (bat[0] + 44, pv_bat_bottom_y),
+            (bat[0] + 44, bat[1] + node_h)
+        ])
+
+        # FUEL CELL -> GRID
+        # Bottom lane closest to panel, far-right vertical lane, clean horizontal entry into grid
+        self.draw_arrow([
+            (fc[0] + 44, fc[1] + node_h),
+            (fc[0] + 44, fc_grid_bottom_y),
+            (fc_grid_right_x, fc_grid_bottom_y),
+            (fc_grid_right_x, fc_grid_entry_y),
+            (grid[0] + node_w, fc_grid_entry_y)
+        ])
+
+        # BATTERY -> GRID
+        # Separate right-side lane, clean horizontal entry into grid
+        self.draw_arrow([
+            (bat[0] + node_w, bat[1] + 25),
+            (bat_grid_right_x, bat[1] + 25),
+            (bat_grid_right_x, bat_grid_entry_y),
+            (grid[0] + node_w, bat_grid_entry_y)
+        ])
+
+        # ------------------------------------------------------------
+        # DRAW NODES LAST SO LINES NEVER COVER BOXES
+        # ------------------------------------------------------------
 
         self.draw_node("pv", *pv)
         self.draw_node("grid", *grid)
@@ -413,7 +532,7 @@ class Visual:
         self.draw_node("bottling", *bot)
         self.draw_node("fuel_cell", *fc)
         self.draw_node("battery", *bat)
-
+        
     def draw_graph(self, key, x, y, w, h, label, unit):
         data = self.twin.history.get(key, [])
 
@@ -448,10 +567,10 @@ class Visual:
 
     def draw_graphs(self):
         x = 325
-        y = 510
+        y = 560
 
         available_w = self.width - x - 20
-        w = max(210, (available_w - 24) // 3)
+        w = max(190, (available_w - 24) // 3)
         h = 52
         gap_x = 12
         gap_y = 6
